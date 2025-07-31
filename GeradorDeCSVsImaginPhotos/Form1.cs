@@ -21,35 +21,24 @@ namespace GeradorDeCSVsImaginPhotos
         List<Foto> lstFotos = new List<Foto>();
         List<string> fotosHeader = new List<string>(), arrLines = new List<string>();
         Regex reg1 = new Regex(@"\d{2}x\d{2}"), reg2 = new Regex(@"\d{3}x\d{3}"), reg3 = new Regex(@"\d{3}x\d{4}"), reg4 = new Regex(@"\d{4}x\d{4}"), reg5 = new Regex(@"\d{4}x\d{3}"), reg6 = new Regex(@"scaled");
-        string fotoUrl = "";
+        string domain = "/*Dominio utilizado*/", fotoUrl = "";
         private static string programPath = Application.StartupPath;
         public Form1()
         {
             // Configurar o serviço IHttpClientFactory
             var services = new ServiceCollection();
-            services.AddHttpClient();
+            object value = services.AddHttpClient();
             _serviceProvider = services.BuildServiceProvider();
-            PreencherFotos(/*URL da página com as fotos*/);
+            PreencherFotos("/*url da página com as imagens*/");
         }
         public async Task PreencherFotos(string rootPath)
         {
-            List<string> lstSubFoldL1 = await ListarSubItemsAsync(5, rootPath), lstSubFoldL2, lstUrlFiles = new List<string>();
-            foreach (string subFoldL1 in lstSubFoldL1)
-            {
-                lstSubFoldL2 = await ListarSubItemsAsync(3, rootPath + subFoldL1);
-                foreach (string subFoldL2 in lstSubFoldL2)
-                {
-                    if (subFoldL2 == "07/")
-                    {
-                        lstUrlFiles = await ListarSubItemsAsync(0, rootPath + subFoldL1 + subFoldL2);
-                    }
-                }
-            }
+            List<string> lstFotosUrl = await ListarSubItemsAsync(rootPath);
             InitializeComponent();
-            SubItemsCreator(lstUrlFiles);
+            SubItemsCreator(lstFotosUrl);
             ControlsCreator();
         }
-        private async Task<List<string>> ListarSubItemsAsync(int sizeOfAtribute, string url)
+        private async Task<List<string>> ListarSubItemsAsync(string url)
         {
             List<string> lstSubItems = new List<string>();
             HtmlDocument doc = new HtmlDocument();
@@ -57,18 +46,11 @@ namespace GeradorDeCSVsImaginPhotos
             foreach (HtmlNode link in doc.DocumentNode.SelectNodes("//a[@href]"))
             {
                 string href = link.GetAttributeValue("href", "");
-                if (href != "../")
+                if (href.Contains("jpg") && !href.Contains("-1.jpg"))
                 {
-                    if (sizeOfAtribute == 0)
+                    if (!reg1.IsMatch(href) && !reg2.IsMatch(href) && !reg3.IsMatch(href) && !reg4.IsMatch(href) && !reg5.IsMatch(href) && !reg6.IsMatch(href) && !href.Contains("banner"))
                     {
-                        if (!reg1.IsMatch(href) && !reg2.IsMatch(href) && !reg3.IsMatch(href) && !reg4.IsMatch(href) && !reg5.IsMatch(href) && !reg6.IsMatch(href) && href.Contains("jpg")&& !href.Contains("banner"))
-                        {
-                            lstSubItems.Add(url+href);
-                        }
-                    }
-                    else if (href.EndsWith("/") && href.Count() == sizeOfAtribute)
-                    {
-                        lstSubItems.Add(href);
+                        lstSubItems.Add(domain+href);
                     }
                 }
             }
